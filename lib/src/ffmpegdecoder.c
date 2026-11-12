@@ -46,7 +46,8 @@ static double chiaki_ffmpeg_decoder_default_frame_duration_us(unsigned int max_f
 }
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *decoder, ChiakiLog *log,
-		ChiakiCodec codec, unsigned int max_fps, const char *hw_decoder_name, AVBufferRef *hw_device_ctx,
+		ChiakiCodec codec, unsigned int max_fps, unsigned int width, unsigned int height,
+		const char *hw_decoder_name, AVBufferRef *hw_device_ctx,
 		ChiakiFfmpegFrameAvailable frame_available_cb, void *frame_available_cb_user)
 {
 	ChiakiErrorCode err = chiaki_mutex_init(&decoder->mutex, false);
@@ -118,6 +119,14 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 		if(output_buffers && *output_buffers)
 			av_dict_set(&codec_opts, "num_output_buffers", output_buffers, 0);
 		decoder->codec_context->flags |= AV_CODEC_FLAG_LOW_DELAY;
+		// Stateful V4L2 decoders (Qualcomm Iris) need the stream geometry and the
+		// capture format up front; a 0x0 format makes S_FMT fail with EINVAL.
+		decoder->codec_context->width = (int)width;
+		decoder->codec_context->height = (int)height;
+		decoder->codec_context->coded_width = (int)width;
+		decoder->codec_context->coded_height = (int)height;
+		decoder->codec_context->pix_fmt = AV_PIX_FMT_NV12;
+		CHIAKI_LOGI(log, "v4l2m2m: %ux%u, NV12", width, height);
 	}
 	else if(hw_decoder_name)
 	{
@@ -171,7 +180,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 			avcodec_free_context(&decoder->codec_context);
 			chiaki_mutex_unlock(&decoder->mutex);
 			chiaki_mutex_fini(&decoder->mutex);
-			return chiaki_ffmpeg_decoder_init(decoder, log, codec, max_fps, NULL, NULL,
+			return chiaki_ffmpeg_decoder_init(decoder, log, codec, max_fps, width, height, NULL, NULL,
 					frame_available_cb, frame_available_cb_user);
 		}
 		goto error_codec_context;
@@ -253,6 +262,11 @@ CHIAKI_EXPORT bool chiaki_ffmpeg_decoder_video_sample_cb(uint8_t *buf, size_t bu
 		decoder->synthetic_packet_pts += synthetic_duration_pts * (int64_t)frames_lost;
 
 	AVPacket *packet = av_packet_alloc();
+	if(!packet)
+	{
+		chiaki_mutex_unlock(&decoder->mutex);
+		return false;
+	}
 	packet->data = buf;
 	packet->size = buf_size;
 	packet->pts = decoder->synthetic_packet_pts;
