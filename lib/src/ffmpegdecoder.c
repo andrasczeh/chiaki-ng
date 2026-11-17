@@ -25,6 +25,41 @@ static const char *chiaki_codec_v4l2m2m_decoder_name(ChiakiCodec codec)
 	}
 }
 
+#ifdef __linux__
+#include <dirent.h>
+#include <errno.h>
+#include <unistd.h>
+
+// Log every /dev/video* node and whether we may open it, to tell missing devices,
+// sandbox restrictions and permission problems apart when V4L2 decoding fails.
+static void chiaki_v4l2m2m_log_devices(ChiakiLog *log)
+{
+	DIR *dev = opendir("/dev");
+	if(!dev)
+	{
+		CHIAKI_LOGE(log, "v4l2m2m: cannot list /dev: %s", strerror(errno));
+		return;
+	}
+	int found = 0;
+	struct dirent *entry;
+	while((entry = readdir(dev)))
+	{
+		if(strncmp(entry->d_name, "video", 5) != 0)
+			continue;
+		char path[300];
+		snprintf(path, sizeof(path), "/dev/%s", entry->d_name);
+		found++;
+		if(access(path, R_OK | W_OK) == 0)
+			CHIAKI_LOGI(log, "v4l2m2m: %s is accessible", path);
+		else
+			CHIAKI_LOGE(log, "v4l2m2m: %s is NOT accessible: %s", path, strerror(errno));
+	}
+	closedir(dev);
+	if(!found)
+		CHIAKI_LOGE(log, "v4l2m2m: no /dev/video* nodes visible (Flatpak needs --device=all)");
+}
+#endif
+
 static enum AVCodecID chiaki_codec_av_codec_id(ChiakiCodec codec)
 {
 	switch(codec)
@@ -175,7 +210,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 		CHIAKI_LOGE(log, "Failed to open codec context: %s", errbuf);
 		if(decoder->v4l2m2m)
 		{
-			CHIAKI_LOGE(log, "v4l2m2m: no usable decoder node found. Check that /dev/video* (e.g. /dev/video-dec0) exists and is accessible (Flatpak: --device=all)");
+			CHIAKI_LOGE(log, "v4l2m2m: the V4L2 decoder could not be opened");
+#ifdef __linux__
+			chiaki_v4l2m2m_log_devices(log);
+#endif
 			CHIAKI_LOGW(log, "v4l2m2m: falling back to software decoding");
 			avcodec_free_context(&decoder->codec_context);
 			chiaki_mutex_unlock(&decoder->mutex);
