@@ -988,6 +988,13 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
     }
     bool use_opengl_renderer = window && window->runtimeRendererBackend() == static_cast<int>(RenderBackend::OpenGL);
     bool prefer_cuda = window && window->nvidiaCard() && availableDecoders.contains("cuda");
+    // On ARM Linux (Steam Frame, other Snapdragon/SoC devices) VAAPI and Vulkan Video
+    // are normally unavailable; the SoC's decoder is reached through V4L2 M2M.
+#if defined(Q_OS_LINUX) && (defined(Q_PROCESSOR_ARM_64) || defined(__aarch64__))
+    bool prefer_v4l2m2m = availableDecoders.contains("v4l2m2m");
+#else
+    bool prefer_v4l2m2m = false;
+#endif
     auto fallbackVulkanDecoderForOpenGL = [&]() {
         if (!use_opengl_renderer || session_info.hw_decoder != "vulkan")
             return;
@@ -998,6 +1005,13 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
         {
             qCInfo(chiakiGui) << "Renderer backend is OpenGL, falling back from vulkan decoder to cuda";
             session_info.hw_decoder = "cuda";
+            fallbackApplied = true;
+        }
+        else
+        if (prefer_v4l2m2m)
+        {
+            qCInfo(chiakiGui) << "Renderer backend is OpenGL, falling back from vulkan decoder to v4l2m2m";
+            session_info.hw_decoder = "v4l2m2m";
             fallbackApplied = true;
         }
         else
@@ -1039,7 +1053,12 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
     {
         session_info.hw_decoder = QString();
 #if defined(Q_OS_LINUX)
-        if(!use_opengl_renderer && availableDecoders.contains("vulkan"))
+        if(prefer_v4l2m2m)
+        {
+            qCInfo(chiakiGui) << "Auto hw decoder selecting v4l2m2m";
+            session_info.hw_decoder = "v4l2m2m";
+        }
+        else if(!use_opengl_renderer && availableDecoders.contains("vulkan"))
         {
             qCInfo(chiakiGui) << "Auto hw decoder selecting vulkan";
             session_info.hw_decoder = "vulkan";
@@ -1053,6 +1072,11 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
         {
             qCInfo(chiakiGui) << "Auto hw decoder selecting vaapi";
             session_info.hw_decoder = "vaapi";
+        }
+        else if(availableDecoders.contains("v4l2m2m"))
+        {
+            qCInfo(chiakiGui) << "Auto hw decoder selecting v4l2m2m";
+            session_info.hw_decoder = "v4l2m2m";
         }
 #elif defined(Q_OS_WIN)
         if(!use_opengl_renderer && availableDecoders.contains("vulkan"))
@@ -1091,10 +1115,20 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
                 qCInfo(chiakiGui) << "Falling back to cuda";
                 session_info.hw_decoder = "cuda";
             }
+            else if(prefer_v4l2m2m)
+            {
+                qCInfo(chiakiGui) << "Falling back to v4l2m2m";
+                session_info.hw_decoder = "v4l2m2m";
+            }
             else if(availableDecoders.contains("vaapi"))
             {
                 qCInfo(chiakiGui) << "Falling back to vaapi";
                 session_info.hw_decoder = "vaapi";
+            }
+            else if(availableDecoders.contains("v4l2m2m"))
+            {
+                qCInfo(chiakiGui) << "Falling back to v4l2m2m";
+                session_info.hw_decoder = "v4l2m2m";
             }
 #elif defined(Q_OS_WIN)
             if(prefer_cuda)
@@ -1111,6 +1145,11 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
         }
         if(session_info.hw_decoder.isEmpty())
             qCInfo(chiakiGui) << "Falling back to software decoder";
+    }
+    if (session_info.hw_decoder == "v4l2m2m" && session_info.video_profile.codec == CHIAKI_CODEC_H265_HDR) {
+        // FFmpeg's V4L2 M2M wrapper can't output P010, so request an 8-bit stream instead.
+        qCInfo(chiakiGui) << "v4l2m2m decoder has no 10-bit output, requesting H265 SDR instead of HDR";
+        session_info.video_profile.codec = CHIAKI_CODEC_H265;
     }
 
     try {

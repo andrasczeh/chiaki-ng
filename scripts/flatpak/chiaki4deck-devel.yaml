@@ -146,6 +146,10 @@ modules:
       - --enable-hwaccel=hevc_vaapi
       - --enable-hwaccel=h264_vulkan
       - --enable-hwaccel=hevc_vulkan
+      # Stateful V4L2 M2M decoders (Qualcomm Iris on Steam Frame, other ARM SoCs)
+      - --enable-v4l2-m2m
+      - --enable-decoder=h264_v4l2m2m
+      - --enable-decoder=hevc_v4l2m2m
     sources:
       - type: archive
         url: https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz

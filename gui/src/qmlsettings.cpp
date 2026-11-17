@@ -11,6 +11,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QProcess>
+#include <QDir>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -32,6 +33,18 @@ static bool codecSupportsHwDevice(enum AVCodecID codec_id, AVHWDeviceType type)
             return true;
     }
 }
+
+#if defined(Q_OS_LINUX)
+// Stateful V4L2 mem2mem decoders (Qualcomm Iris on the Steam Frame, other ARM SoCs)
+// are separate named FFmpeg decoders, not an AVHWDeviceType.
+static bool v4l2m2mDecoderAvailable()
+{
+    if (!avcodec_find_decoder_by_name("h264_v4l2m2m") || !avcodec_find_decoder_by_name("hevc_v4l2m2m"))
+        return false;
+    const QDir dev(QStringLiteral("/dev"));
+    return !dev.entryList({QStringLiteral("video*")}, QDir::System | QDir::Files).isEmpty();
+}
+#endif
 
 static bool hwDecoderRuntimeAvailable(const QString &name)
 {
@@ -1706,6 +1719,10 @@ QStringList QmlSettings::availableDecoders() const
         if (allowed.contains(name) && hwDecoderRuntimeAvailable(name))
             out.append(name);
     }
+#if defined(Q_OS_LINUX)
+    if (v4l2m2mDecoderAvailable())
+        out.append("v4l2m2m");
+#endif
     out.append("auto");
     return out;
 }

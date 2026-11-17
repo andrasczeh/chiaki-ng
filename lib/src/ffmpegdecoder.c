@@ -3,7 +3,27 @@
 #include <chiaki/time.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/pixdesc.h>
+#include <libavutil/dict.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
+// "v4l2m2m" is not an FFmpeg hwdevice type: stateful V4L2 mem2mem decoders
+// (e.g. Qualcomm Iris on the Steam Frame / Snapdragon) are exposed as separate
+// named decoders that hand back ordinary NV12 software frames.
+#define CHIAKI_HW_DECODER_V4L2M2M "v4l2m2m"
+
+static const char *chiaki_codec_v4l2m2m_decoder_name(ChiakiCodec codec)
+{
+	switch(codec)
+	{
+		case CHIAKI_CODEC_H265:
+		case CHIAKI_CODEC_H265_HDR:
+			return "hevc_v4l2m2m";
+		default:
+			return "h264_v4l2m2m";
+	}
+}
 
 static enum AVCodecID chiaki_codec_av_codec_id(ChiakiCodec codec)
 {
@@ -49,12 +69,26 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 
 	decoder->hw_device_ctx = hw_device_ctx ? av_buffer_ref(hw_device_ctx) : NULL;
 	decoder->hw_pix_fmt = AV_PIX_FMT_NONE;
+	decoder->v4l2m2m = hw_decoder_name && strcmp(hw_decoder_name, CHIAKI_HW_DECODER_V4L2M2M) == 0;
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();
 #endif
 	enum AVCodecID av_codec = chiaki_codec_av_codec_id(codec);
-	decoder->av_codec = avcodec_find_decoder(av_codec);
+	if(decoder->v4l2m2m)
+	{
+		if(decoder->hdr_enabled)
+			CHIAKI_LOGW(log, "v4l2m2m: FFmpeg's V4L2 M2M wrapper has no 10-bit (P010) output, HDR will most likely not work");
+		const char *v4l2_name = chiaki_codec_v4l2m2m_decoder_name(codec);
+		decoder->av_codec = avcodec_find_decoder_by_name(v4l2_name);
+		if(!decoder->av_codec)
+		{
+			CHIAKI_LOGE(log, "Decoder \"%s\" not available, FFmpeg needs to be built with --enable-v4l2-m2m", v4l2_name);
+			goto error_mutex;
+		}
+	}
+	else
+		decoder->av_codec = avcodec_find_decoder(av_codec);
 	if(!decoder->av_codec)
 	{
 		CHIAKI_LOGE(log, "%s Codec not available", chiaki_codec_name(codec));
@@ -68,7 +102,24 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 		goto error_mutex;
 	}
 
-	if(hw_decoder_name)
+	AVDictionary *codec_opts = NULL;
+	if(decoder->v4l2m2m)
+	{
+		CHIAKI_LOGI(log, "Using V4L2 M2M hardware decoder \"%s\"", decoder->av_codec->name);
+		if(decoder->hw_device_ctx)
+			av_buffer_unref(&decoder->hw_device_ctx);
+		decoder->hw_pix_fmt = AV_PIX_FMT_NV12;
+		// Decoded frames live in the driver's capture buffers until the renderer
+		// releases them, so keep FFmpeg's default pool (20) unless overridden.
+		const char *capture_buffers = getenv("CHIAKI_V4L2M2M_CAPTURE_BUFFERS");
+		if(capture_buffers && *capture_buffers)
+			av_dict_set(&codec_opts, "num_capture_buffers", capture_buffers, 0);
+		const char *output_buffers = getenv("CHIAKI_V4L2M2M_OUTPUT_BUFFERS");
+		if(output_buffers && *output_buffers)
+			av_dict_set(&codec_opts, "num_output_buffers", output_buffers, 0);
+		decoder->codec_context->flags |= AV_CODEC_FLAG_LOW_DELAY;
+	}
+	else if(hw_decoder_name)
 	{
 		CHIAKI_LOGI(log, "Trying to use hardware decoder \"%s\"", hw_decoder_name);
 		enum AVHWDeviceType type = av_hwdevice_find_type_by_name(hw_decoder_name);
@@ -106,9 +157,15 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 	decoder->codec_context->pkt_timebase = decoder->synthetic_time_base;
 	decoder->codec_context->time_base = decoder->synthetic_time_base;
 
-	if(avcodec_open2(decoder->codec_context, decoder->av_codec, NULL) < 0)
+	int open_err = avcodec_open2(decoder->codec_context, decoder->av_codec, &codec_opts);
+	av_dict_free(&codec_opts);
+	if(open_err < 0)
 	{
-		CHIAKI_LOGE(log, "Failed to open codec context");
+		char errbuf[128];
+		av_make_error_string(errbuf, sizeof(errbuf), open_err);
+		CHIAKI_LOGE(log, "Failed to open codec context: %s", errbuf);
+		if(decoder->v4l2m2m)
+			CHIAKI_LOGE(log, "v4l2m2m: no usable decoder node found. Check that /dev/video* (e.g. /dev/video-dec0) exists and is accessible (Flatpak: --device=all)");
 		goto error_codec_context;
 	}
 	chiaki_mutex_unlock(&decoder->mutex);
@@ -342,6 +399,8 @@ CHIAKI_EXPORT void chiaki_ffmpeg_frame_get_timing(
 
 CHIAKI_EXPORT enum AVPixelFormat chiaki_ffmpeg_decoder_get_pixel_format(ChiakiFfmpegDecoder *decoder)
 {
+	if (decoder->v4l2m2m)
+		return AV_PIX_FMT_NV12;
 	if (decoder->hw_device_ctx) {
 		return decoder->hdr_enabled
 			? AV_PIX_FMT_P010LE
