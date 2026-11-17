@@ -38,8 +38,11 @@ jobs:
         working-directory: chiaki-ng
         run: |
           # build the checked-out commit, not the manifest's branch
+          # and fetch it from this repository (works for forks too)
           sed -i 's|^        branch: main$|        commit: ${{ github.sha }}|' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
+          sed -i 's|^        url: https://github.com/chiaki-ng/chiaki-ng.git$|        url: ${{ github.server_url }}/${{ github.repository }}.git|' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
           grep -q '^        commit: ${{ github.sha }}$' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
+          grep -q '^        url: ${{ github.server_url }}/${{ github.repository }}.git$' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
           flatpak-builder --repo=chiaki-ng --force-clean build-dir scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
 
       - name: Bundle Flatpak app
@@ -53,11 +56,11 @@ jobs:
           name: chiaki-ng-arm64.flatpak
           path: chiaki-ng/chiaki-ng-arm64.flatpak
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
       - name: Upload chiaki-ng Artifact
         uses: actions/upload-artifact@v7
         with:
           name: chiaki-ng-arm64-debug.flatpak
           path: chiaki-ng/chiaki-ng-arm64-debug.flatpak
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
