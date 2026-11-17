@@ -100,6 +100,10 @@ class QmlSettings : public QObject
 	Q_PROPERTY(int placeboPlaneDownscaler READ placeboPlaneDownscaler WRITE setPlaceboPlaneDownscaler NOTIFY placeboPlaneDownscalerChanged)
 	Q_PROPERTY(int placeboFrameMixer READ placeboFrameMixer WRITE setPlaceboFrameMixer NOTIFY placeboFrameMixerChanged)
 	Q_PROPERTY(bool directFrameMapping READ directFrameMapping WRITE setDirectFrameMapping NOTIFY directFrameMappingChanged)
+	Q_PROPERTY(int stereo3DMode READ stereo3DMode WRITE setStereo3DMode NOTIFY stereo3DChanged)
+	Q_PROPERTY(int stereo3DStrength READ stereo3DStrength WRITE setStereo3DStrength NOTIFY stereo3DChanged)
+	Q_PROPERTY(int stereo3DConvergence READ stereo3DConvergence WRITE setStereo3DConvergence NOTIFY stereo3DChanged)
+	Q_PROPERTY(bool stereo3DSwapEyes READ stereo3DSwapEyes WRITE setStereo3DSwapEyes NOTIFY stereo3DChanged)
 	Q_PROPERTY(bool placeboDeinterlaceEnabled READ placeboDeinterlaceEnabled WRITE setPlaceboDeinterlaceEnabled NOTIFY placeboDeinterlaceEnabledChanged)
 	Q_PROPERTY(int placeboDeinterlacePreset READ placeboDeinterlacePreset WRITE setPlaceboDeinterlacePreset NOTIFY placeboDeinterlacePresetChanged)
 	Q_PROPERTY(int placeboDeinterlaceAlgorithm READ placeboDeinterlaceAlgorithm WRITE setPlaceboDeinterlaceAlgorithm NOTIFY placeboDeinterlaceAlgorithmChanged)
@@ -347,6 +351,14 @@ public:
     int placeboFrameMixer() const;
     bool directFrameMapping() const;
     void setDirectFrameMapping(bool enabled);
+    int stereo3DMode() const;
+    void setStereo3DMode(int mode);
+    int stereo3DStrength() const;
+    void setStereo3DStrength(int strength);
+    int stereo3DConvergence() const;
+    void setStereo3DConvergence(int convergence);
+    bool stereo3DSwapEyes() const;
+    void setStereo3DSwapEyes(bool swap);
     void setPlaceboFrameMixer(int mixer);
 
     bool placeboDeinterlaceEnabled() const;
@@ -704,6 +716,7 @@ signals:
     void placeboPlaneDownscalerChanged();
     void placeboFrameMixerChanged();
     void directFrameMappingChanged();
+    void stereo3DChanged();
     void placeboDeinterlaceEnabledChanged();
     void placeboDeinterlacePresetChanged();
     void placeboDeinterlaceAlgorithmChanged();

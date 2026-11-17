@@ -989,6 +989,58 @@ int QmlSettings::placeboFrameMixer() const
 {
     return static_cast<int>(settings->GetPlaceboFrameMixer());
 }
+int QmlSettings::stereo3DMode() const
+{
+    return settings->GetStereo3DMode();
+}
+
+void QmlSettings::setStereo3DMode(int mode)
+{
+    if (mode == settings->GetStereo3DMode())
+        return;
+    settings->SetStereo3DMode(mode);
+    emit stereo3DChanged();
+}
+
+int QmlSettings::stereo3DStrength() const
+{
+    return settings->GetStereo3DStrength();
+}
+
+void QmlSettings::setStereo3DStrength(int strength)
+{
+    if (strength == settings->GetStereo3DStrength())
+        return;
+    settings->SetStereo3DStrength(strength);
+    emit stereo3DChanged();
+}
+
+int QmlSettings::stereo3DConvergence() const
+{
+    return settings->GetStereo3DConvergence();
+}
+
+void QmlSettings::setStereo3DConvergence(int convergence)
+{
+    if (convergence == settings->GetStereo3DConvergence())
+        return;
+    settings->SetStereo3DConvergence(convergence);
+    emit stereo3DChanged();
+}
+
+bool QmlSettings::stereo3DSwapEyes() const
+{
+    return settings->GetStereo3DSwapEyes();
+}
+
+void QmlSettings::setStereo3DSwapEyes(bool swap)
+{
+    if (swap == settings->GetStereo3DSwapEyes())
+        return;
+    settings->SetStereo3DSwapEyes(swap);
+    emit stereo3DChanged();
+}
+
 bool QmlSettings::directFrameMapping() const
 {
     return settings->GetDirectFrameMapping();
@@ -1987,6 +2039,7 @@ void QmlSettings::refreshAllKeys()
 void QmlSettings::refreshAllPlaceboKeys()
 {
     emit directFrameMappingChanged();
+    emit stereo3DChanged();
     emit placeboUpscalerChanged();
     emit placeboPlaneUpscalerChanged();
     emit placeboDownscalerChanged();

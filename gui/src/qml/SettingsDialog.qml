@@ -983,14 +983,109 @@ DialogView {
                     C.ComboBox {
                         Layout.preferredWidth: 400
                         model: [qsTr("None"), qsTr("Oversample"), qsTr("Hermite"), qsTr("Linear"), qsTr("Cubic")]
-                        enabled: !Chiaki.settings.directFrameMapping
-                        currentIndex: Chiaki.settings.directFrameMapping ? 0 : Chiaki.settings.placeboFrameMixer
+                        enabled: !Chiaki.settings.directFrameMapping && Chiaki.settings.stereo3DMode === 0
+                        currentIndex: (Chiaki.settings.directFrameMapping || Chiaki.settings.stereo3DMode !== 0) ? 0 : Chiaki.settings.placeboFrameMixer
                         onActivated: index => Chiaki.settings.placeboFrameMixer = index
                     }
 
                     Label {
                         Layout.alignment: Qt.AlignRight
                         text: qsTr("(None)")
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("3D Mode:")
+                    }
+
+                    C.ComboBox {
+                        Layout.preferredWidth: 400
+                        model: [qsTr("Off"), qsTr("Half Side-by-Side"), qsTr("Anaglyph (Green/Magenta)")]
+                        currentIndex: Chiaki.settings.stereo3DMode
+                        onActivated: index => Chiaki.settings.stereo3DMode = index
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("(Off)")
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("3D Strength:")
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                    }
+
+                    C.Slider {
+                        Layout.preferredWidth: 250
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                        from: 0
+                        to: 100
+                        stepSize: 5
+                        value: Chiaki.settings.stereo3DStrength
+                        onMoved: Chiaki.settings.stereo3DStrength = value
+                        Label {
+                            anchors {
+                                left: parent.right
+                                verticalCenter: parent.verticalCenter
+                                leftMargin: 10
+                            }
+                            text: parent.value.toFixed(0) + "%"
+                        }
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("(50%)")
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("3D Screen Depth:")
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                    }
+
+                    C.Slider {
+                        Layout.preferredWidth: 250
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                        from: 0
+                        to: 100
+                        stepSize: 5
+                        value: Chiaki.settings.stereo3DConvergence
+                        onMoved: Chiaki.settings.stereo3DConvergence = value
+                        Label {
+                            anchors {
+                                left: parent.right
+                                verticalCenter: parent.verticalCenter
+                                leftMargin: 10
+                            }
+                            text: parent.value.toFixed(0) + "%"
+                        }
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("(35%, higher = more behind the screen)")
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("3D Swap Eyes:")
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                    }
+
+                    C.CheckBox {
+                        visible: Chiaki.settings.stereo3DMode !== 0
+                        checked: Chiaki.settings.stereo3DSwapEyes
+                        onToggled: Chiaki.settings.stereo3DSwapEyes = checked
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("(Off)")
+                        visible: Chiaki.settings.stereo3DMode !== 0
                     }
 
                     Label {

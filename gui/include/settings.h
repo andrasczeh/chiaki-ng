@@ -519,6 +519,15 @@ class Settings : public QObject
 
 		PlaceboFrameMixer GetPlaceboFrameMixer() const;
 		bool GetDirectFrameMapping() const { return settings.value("settings/direct_frame_mapping", true).toBool(); }
+		// Synthetic 3D: 0 = off, 1 = half side-by-side, 2 = anaglyph (green/magenta)
+		int GetStereo3DMode() const { return qBound(0, settings.value("settings/stereo3d_mode", 0).toInt(), 2); }
+		void SetStereo3DMode(int mode) { settings.setValue("settings/stereo3d_mode", qBound(0, mode, 2)); }
+		int GetStereo3DStrength() const { return qBound(0, settings.value("settings/stereo3d_strength", 50).toInt(), 100); }
+		void SetStereo3DStrength(int v) { settings.setValue("settings/stereo3d_strength", qBound(0, v, 100)); }
+		int GetStereo3DConvergence() const { return qBound(0, settings.value("settings/stereo3d_convergence", 35).toInt(), 100); }
+		void SetStereo3DConvergence(int v) { settings.setValue("settings/stereo3d_convergence", qBound(0, v, 100)); }
+		bool GetStereo3DSwapEyes() const { return settings.value("settings/stereo3d_swap_eyes", false).toBool(); }
+		void SetStereo3DSwapEyes(bool v) { settings.setValue("settings/stereo3d_swap_eyes", v); }
 		void SetDirectFrameMapping(bool enabled) { settings.setValue("settings/direct_frame_mapping", enabled); }
 		void SetPlaceboFrameMixer(PlaceboFrameMixer frame_mixer);
 

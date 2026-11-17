@@ -2684,6 +2684,7 @@ QmlMainWindow::~QmlMainWindow()
     pl_mpv_user_shader_destroy(&fsr_hook);
     pl_mpv_user_shader_destroy(&fsrcnnx_hook_8);
     pl_mpv_user_shader_destroy(&fsrcnnx_hook_16);
+    stereo3d.releaseGpu(placeboGpu());
     if (render_backend == RenderBackend::Vulkan) {
         pl_vulkan_destroy(&placebo_vulkan);
         pl_vk_inst_destroy(&placebo_vk_inst);
@@ -2960,6 +2961,10 @@ const struct pl_filter_config *QmlMainWindow::effectiveFrameMixerConfig(const st
 {
     if (bypass_frame_queue)
         return nullptr;
+    // 3D keeps a per-frame depth history; frame mixing would render several source
+    // frames (incl. future ones) per present and scramble it.
+    if (settings && settings->GetStereo3DMode() != 0)
+        return nullptr;
     Q_UNUSED(render_params);
 
     switch (video_preset) {
@@ -2986,6 +2991,8 @@ bool QmlMainWindow::effectiveFrameMixerEnabled(const struct pl_render_params *re
 bool QmlMainWindow::configuredFrameMixerEnabledForScheduling() const
 {
     if (bypass_frame_queue)
+        return false;
+    if (settings && settings->GetStereo3DMode() != 0)
         return false;
     switch (video_preset) {
     case VideoPreset::Fast:
@@ -6800,6 +6807,7 @@ void QmlMainWindow::render()
             pl_avframe_params avparams = {};
             avparams.frame = incoming;
             avparams.tex = placebo_tex.data();
+            stereo3d_direct_serial++;
             if (!pl_map_avframe_ex(placeboGpu(), &direct_frame, &avparams)) {
                 qCWarning(chiakiGui) << "Failed to map direct video frame";
                 pl_unmap_avframe(placeboGpu(), &direct_frame);
@@ -7539,10 +7547,37 @@ void QmlMainWindow::render()
                                                fsr_hook, fsrcnnx_hook_8, fsrcnnx_hook_16);
         }
     }
-    const struct pl_hook *active_hooks[] = {fsrcnnx_hook};
-    if (fsrcnnx_hook) {
+    // Synthetic 3D (only while streaming, not on the UI/warmup frames)
+    if (settings && stream_active && frame_mix.num_frames > 0) {
+        stereo3d.setParams(static_cast<Stereo3DMode>(settings->GetStereo3DMode()),
+                           settings->GetStereo3DStrength(),
+                           settings->GetStereo3DConvergence(),
+                           settings->GetStereo3DSwapEyes());
+        uint64_t serial = stereo3d_direct_serial;
+        if (!bypass_frame_queue && frame_mix.signatures) {
+            const struct pl_frame *nearest = pl_frame_mix_nearest(&frame_mix);
+            for (int i = 0; i < frame_mix.num_frames; i++) {
+                if (frame_mix.frames[i] == nearest) {
+                    serial = frame_mix.signatures[i];
+                    break;
+                }
+            }
+        }
+        stereo3d.setFrameSerial(serial);
+    } else {
+        stereo3d.setParams(Stereo3DMode::Off, 0, 0, false);
+    }
+    const struct pl_hook *active_hooks[2] = {};
+    int num_active_hooks = 0;
+    if (const struct pl_hook *stereo_hook = stereo3d.hook())
+        active_hooks[num_active_hooks++] = stereo_hook;
+    if (fsrcnnx_hook)
+        active_hooks[num_active_hooks++] = fsrcnnx_hook;
+    if (num_active_hooks > 0) {
         params.hooks = active_hooks;
-        params.num_hooks = 1;
+        params.num_hooks = num_active_hooks;
+    }
+    if (fsrcnnx_hook) {
         switch (video_preset) {
         case VideoPreset::HighQualitySpatial:
             if (fsrcnnx_hook == fsr_hook)

@@ -2,6 +2,7 @@
 
 #include "streamsession.h"
 #include "settings.h"
+#include "stereo3d.h"
 
 #include <QMutex>
 #include <QAtomicInteger>
@@ -465,6 +466,8 @@ private:
     const struct pl_hook *fsr_hook = nullptr;
     const struct pl_hook *fsrcnnx_hook_8 = nullptr;
     const struct pl_hook *fsrcnnx_hook_16 = nullptr;
+    Stereo3D stereo3d;
+    uint64_t stereo3d_direct_serial = 0;
 
     struct {
         PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;

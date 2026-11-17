@@ -50,6 +50,8 @@ set(SOURCE_FILES
 	src/qmlcontroller.cpp
 	include/qmlsettings.h
 	src/qmlsettings.cpp
+	include/stereo3d.h
+	src/stereo3d.cpp
 	include/qmlsvgprovider.h
 	src/qmlsvgprovider.cpp
 	include/systemdinhibit.h
