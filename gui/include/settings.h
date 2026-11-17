@@ -533,6 +533,9 @@ class Settings : public QObject
 		void SetStereo3DConvergence(int v) { settings.setValue("settings/stereo3d_convergence", qBound(0, v, 100)); }
 		bool GetStereo3DSwapEyes() const { return settings.value("settings/stereo3d_swap_eyes", false).toBool(); }
 		void SetStereo3DSwapEyes(bool v) { settings.setValue("settings/stereo3d_swap_eyes", v); }
+		// Steam Frame: switch chiaki-ng's theatre screen to side-by-side stereo automatically
+		bool GetStereo3DFrameScreen() const { return settings.value("settings/stereo3d_frame_screen", true).toBool(); }
+		void SetStereo3DFrameScreen(bool v) { settings.setValue("settings/stereo3d_frame_screen", v); }
 		void SetDirectFrameMapping(bool enabled) { settings.setValue("settings/direct_frame_mapping", enabled); }
 		void SetPlaceboFrameMixer(PlaceboFrameMixer frame_mixer);
 

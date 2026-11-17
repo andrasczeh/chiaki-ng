@@ -1090,6 +1090,24 @@ DialogView {
 
                     Label {
                         Layout.alignment: Qt.AlignRight
+                        text: qsTr("3D on Steam Frame Screen:")
+                        visible: Chiaki.settings.stereo3DMode === 1
+                    }
+
+                    C.CheckBox {
+                        visible: Chiaki.settings.stereo3DMode === 1
+                        checked: Chiaki.settings.stereo3DFrameScreen
+                        onToggled: Chiaki.settings.stereo3DFrameScreen = checked
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("(On, switches the theatre screen to stereo while streaming)")
+                        visible: Chiaki.settings.stereo3DMode === 1
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignRight
                         text: qsTr("Renderer Backend:")
                     }
 

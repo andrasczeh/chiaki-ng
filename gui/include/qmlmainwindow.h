@@ -3,6 +3,9 @@
 #include "streamsession.h"
 #include "settings.h"
 #include "stereo3d.h"
+#ifdef Q_OS_LINUX
+#include "framestereooverlay.h"
+#endif
 
 #include <QMutex>
 #include <QAtomicInteger>
@@ -468,6 +471,10 @@ private:
     const struct pl_hook *fsrcnnx_hook_16 = nullptr;
     Stereo3D stereo3d;
     uint64_t stereo3d_direct_serial = 0;
+#ifdef Q_OS_LINUX
+    std::unique_ptr<FrameStereoOverlay> frame_stereo;
+#endif
+    void updateFrameStereo();
 
     struct {
         PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;

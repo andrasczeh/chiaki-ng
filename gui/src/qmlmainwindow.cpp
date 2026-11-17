@@ -2975,6 +2975,18 @@ static const struct pl_filter_config *frame_mixer_config(Settings *settings)
 
 }
 
+void QmlMainWindow::updateFrameStereo()
+{
+#ifdef Q_OS_LINUX
+    if (!frame_stereo || !settings)
+        return;
+    const bool wanted = stream_session_active.loadAcquire() != 0
+        && settings->GetStereo3DMode() == static_cast<int>(Stereo3DMode::HalfSideBySide)
+        && settings->GetStereo3DFrameScreen();
+    frame_stereo->setWanted(wanted);
+#endif
+}
+
 const struct pl_filter_config *QmlMainWindow::effectiveFrameMixerConfig(const struct pl_render_params *render_params) const
 {
     if (bypass_frame_queue)
@@ -5183,11 +5195,17 @@ renderer_backend_ready:
 
     backend = new QmlBackend(settings, this);
     stats_overlay_widget = new StatsOverlayWidget(this, backend);
+#ifdef Q_OS_LINUX
+    frame_stereo = std::make_unique<FrameStereoOverlay>();
+#endif
+    if (backend->qmlSettings())
+        connect(backend->qmlSettings(), &QmlSettings::stereo3DChanged, this, &QmlMainWindow::updateFrameStereo);
     connect(backend, &QmlBackend::sessionChanged, this, [this, exit_app_on_stream_exit](StreamSession *s) {
         const bool preserve_startup_warmup = s && startup_warmup_preserve_next_session_change;
         startup_warmup_preserve_next_session_change = false;
         session = s;
         stream_session_active.storeRelease(s ? 1 : 0);
+        updateFrameStereo();
         startup_video_visible_generation.fetchAndAddRelaxed(1);
         grab_input = 0;
         if (session)

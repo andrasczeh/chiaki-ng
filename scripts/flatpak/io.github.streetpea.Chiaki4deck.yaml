@@ -16,6 +16,9 @@ finish-args:
   - --device=all
   # Steam Frame: softapmanager socket used to pause Wi-Fi scans while streaming
   - --filesystem=/run/softapmanager.streaming.socket
+  # Steam Frame: SteamVR runtime + shared memory, to switch the theatre screen to stereo for 3D
+  - --filesystem=/opt/steamvr:ro
+  - --device=shm
   - --allow=bluetooth
   - --socket=pulseaudio
   - --env=QTWEBENGINEPROCESS_PATH=/app/bin/QtWebEngineProcess

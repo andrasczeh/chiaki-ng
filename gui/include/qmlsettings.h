@@ -107,6 +107,7 @@ class QmlSettings : public QObject
 	Q_PROPERTY(int stereo3DStrength READ stereo3DStrength WRITE setStereo3DStrength NOTIFY stereo3DChanged)
 	Q_PROPERTY(int stereo3DConvergence READ stereo3DConvergence WRITE setStereo3DConvergence NOTIFY stereo3DChanged)
 	Q_PROPERTY(bool stereo3DSwapEyes READ stereo3DSwapEyes WRITE setStereo3DSwapEyes NOTIFY stereo3DChanged)
+	Q_PROPERTY(bool stereo3DFrameScreen READ stereo3DFrameScreen WRITE setStereo3DFrameScreen NOTIFY stereo3DChanged)
 	Q_PROPERTY(bool placeboDeinterlaceEnabled READ placeboDeinterlaceEnabled WRITE setPlaceboDeinterlaceEnabled NOTIFY placeboDeinterlaceEnabledChanged)
 	Q_PROPERTY(int placeboDeinterlacePreset READ placeboDeinterlacePreset WRITE setPlaceboDeinterlacePreset NOTIFY placeboDeinterlacePresetChanged)
 	Q_PROPERTY(int placeboDeinterlaceAlgorithm READ placeboDeinterlaceAlgorithm WRITE setPlaceboDeinterlaceAlgorithm NOTIFY placeboDeinterlaceAlgorithmChanged)
@@ -367,6 +368,8 @@ public:
     void setStereo3DConvergence(int convergence);
     bool stereo3DSwapEyes() const;
     void setStereo3DSwapEyes(bool swap);
+    bool stereo3DFrameScreen() const;
+    void setStereo3DFrameScreen(bool enabled);
     void setPlaceboFrameMixer(int mixer);
 
     bool placeboDeinterlaceEnabled() const;

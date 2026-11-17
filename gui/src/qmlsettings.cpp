@@ -1054,6 +1054,19 @@ void QmlSettings::setStereo3DSwapEyes(bool swap)
     emit stereo3DChanged();
 }
 
+bool QmlSettings::stereo3DFrameScreen() const
+{
+    return settings->GetStereo3DFrameScreen();
+}
+
+void QmlSettings::setStereo3DFrameScreen(bool enabled)
+{
+    if (enabled == settings->GetStereo3DFrameScreen())
+        return;
+    settings->SetStereo3DFrameScreen(enabled);
+    emit stereo3DChanged();
+}
+
 bool QmlSettings::directFrameMapping() const
 {
     return settings->GetDirectFrameMapping();
