@@ -5,12 +5,12 @@
 #
 #   ./scripts/flatpak/build-local.sh
 #
-# Afterwards: flatpak run io.github.streetpea.Chiaki4deck
+# Afterwards: flatpak run io.github.andrasczeh.ChiakiNgVR
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 work="$repo_root/.flatpak-local"
-manifest="io.github.streetpea.Chiaki4deck.yaml"
+manifest="io.github.andrasczeh.ChiakiNgVR.yaml"
 mkdir -p "$work"
 
 # Patches and module files referenced relatively by the manifest must sit next to it.
@@ -52,5 +52,5 @@ flatpak run org.flatpak.Builder \
     build-dir "$manifest"
 
 echo
-echo "Installed. Run with: flatpak run io.github.streetpea.Chiaki4deck"
+echo "Installed. Run with: flatpak run io.github.andrasczeh.ChiakiNgVR"
 echo "Then pick 'v4l2m2m' (or 'auto') under Settings -> Video -> Hardware Decoder."

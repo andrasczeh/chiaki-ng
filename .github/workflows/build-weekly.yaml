@@ -617,15 +617,15 @@ jobs:
         working-directory: chiaki-ng
         run: |
           # build the checked-out commit, not the manifest's branch
-          sed -i 's|^        branch: main$|        commit: ${{ github.sha }}|' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
-          grep -q '^        commit: ${{ github.sha }}$' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
-          flatpak-builder --repo=chiaki-ng --force-clean build-dir scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
+          sed -i 's|^        branch: main$|        commit: ${{ github.sha }}|' scripts/flatpak/io.github.andrasczeh.ChiakiNgVR.yaml
+          grep -q '^        commit: ${{ github.sha }}$' scripts/flatpak/io.github.andrasczeh.ChiakiNgVR.yaml
+          flatpak-builder --repo=chiaki-ng --force-clean build-dir scripts/flatpak/io.github.andrasczeh.ChiakiNgVR.yaml
 
       - name: Bundle Flatpak app
         working-directory: chiaki-ng
         run: |
-          flatpak build-bundle chiaki-ng chiaki-ng-x64.flatpak io.github.streetpea.Chiaki4deck --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
-          flatpak build-bundle chiaki-ng --runtime chiaki-ng-x64-debug.flatpak io.github.streetpea.Chiaki4deck.Debug --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+          flatpak build-bundle chiaki-ng chiaki-ng-x64.flatpak io.github.andrasczeh.ChiakiNgVR --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+          flatpak build-bundle chiaki-ng --runtime chiaki-ng-x64-debug.flatpak io.github.andrasczeh.ChiakiNgVR.Debug --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Upload chiaki-ng Artifact
         uses: nanoufo/action-upload-artifacts-and-release-assets@v2
@@ -679,15 +679,15 @@ jobs:
         working-directory: chiaki-ng
         run: |
           # build the checked-out commit, not the manifest's branch
-          sed -i 's|^        branch: main$|        commit: ${{ github.sha }}|' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
-          grep -q '^        commit: ${{ github.sha }}$' scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
-          flatpak-builder --repo=chiaki-ng --force-clean build-dir scripts/flatpak/io.github.streetpea.Chiaki4deck.yaml
+          sed -i 's|^        branch: main$|        commit: ${{ github.sha }}|' scripts/flatpak/io.github.andrasczeh.ChiakiNgVR.yaml
+          grep -q '^        commit: ${{ github.sha }}$' scripts/flatpak/io.github.andrasczeh.ChiakiNgVR.yaml
+          flatpak-builder --repo=chiaki-ng --force-clean build-dir scripts/flatpak/io.github.andrasczeh.ChiakiNgVR.yaml
 
       - name: Bundle Flatpak app
         working-directory: chiaki-ng
         run: |
-          flatpak build-bundle chiaki-ng chiaki-ng-arm64.flatpak io.github.streetpea.Chiaki4deck --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
-          flatpak build-bundle chiaki-ng --runtime chiaki-ng-arm64-debug.flatpak io.github.streetpea.Chiaki4deck.Debug --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+          flatpak build-bundle chiaki-ng chiaki-ng-arm64.flatpak io.github.andrasczeh.ChiakiNgVR --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+          flatpak build-bundle chiaki-ng --runtime chiaki-ng-arm64-debug.flatpak io.github.andrasczeh.ChiakiNgVR.Debug --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Upload chiaki-ng Artifact
         uses: nanoufo/action-upload-artifacts-and-release-assets@v2

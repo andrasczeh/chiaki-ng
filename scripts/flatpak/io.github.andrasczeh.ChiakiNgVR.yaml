@@ -1,4 +1,4 @@
-app-id: io.github.streetpea.Chiaki4deck
+app-id: io.github.andrasczeh.ChiakiNgVR
 runtime: org.kde.Platform
 runtime-version: '6.11'
 sdk: org.kde.Sdk
@@ -7,6 +7,8 @@ base-version: '6.11'
 command: chiaki
 rename-icon: chiaking
 rename-desktop-file: chiaking.desktop
+rename-appdata-file: io.github.streetpea.Chiaki4deck.appdata.xml
+desktop-file-name-suffix: " VR"
 separate-locales: false
 finish-args:
   - --share=network
@@ -246,6 +248,7 @@ modules:
         url: https://github.com/chiaki-ng/chiaki-ng.git
         branch: main
     post-install:
+      - sed -i 's|<name>chiaki-ng</name>|<name>chiaki-ng VR</name>|' /app/share/metainfo/io.github.streetpea.Chiaki4deck.appdata.xml
       - install -Dm755 ../scripts/psn-account-id.py /app/bin/psn-account-id
       - install -Dm755 ../scripts/vulkan-gamescope-layers/VkLayer_FROG_gamescope_wsi.x86_64.json
         /app/share/vulkan/implicit_layer.d/VkLayer_FROG_gamescope_wsi.x86_64.json
