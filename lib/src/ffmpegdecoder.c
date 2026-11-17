@@ -165,7 +165,15 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 		av_make_error_string(errbuf, sizeof(errbuf), open_err);
 		CHIAKI_LOGE(log, "Failed to open codec context: %s", errbuf);
 		if(decoder->v4l2m2m)
+		{
 			CHIAKI_LOGE(log, "v4l2m2m: no usable decoder node found. Check that /dev/video* (e.g. /dev/video-dec0) exists and is accessible (Flatpak: --device=all)");
+			CHIAKI_LOGW(log, "v4l2m2m: falling back to software decoding");
+			avcodec_free_context(&decoder->codec_context);
+			chiaki_mutex_unlock(&decoder->mutex);
+			chiaki_mutex_fini(&decoder->mutex);
+			return chiaki_ffmpeg_decoder_init(decoder, log, codec, max_fps, NULL, NULL,
+					frame_available_cb, frame_available_cb_user);
+		}
 		goto error_codec_context;
 	}
 	chiaki_mutex_unlock(&decoder->mutex);

@@ -43,7 +43,7 @@ jobs:
       - name: Upload chiaki-ng Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: chiaki-ng.AppImage_arm64
-          path: chiaki-ng/appimage/chiaki-ng.AppImage
+          name: chiaki-ng-vr.AppImage_arm64
+          path: chiaki-ng/appimage/chiaki-ng-vr.AppImage
           if-no-files-found: error
           retention-days: 7

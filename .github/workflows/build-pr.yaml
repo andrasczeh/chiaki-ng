@@ -234,13 +234,13 @@ jobs:
             --cap-add SYS_ADMIN \
             -t docker.io/streetpea/chiaki-ng-builder:qt6.9.3 \
             /bin/bash -c "sudo -E scripts/build-appimage.sh /build/appdir"
-          cp appimage/chiaki-ng.AppImage appimage/chiaki-ng.AppImage_x86_64
+          cp appimage/chiaki-ng-vr.AppImage appimage/chiaki-ng-vr.AppImage_x86_64
 
       - name: Upload chiaki-ng Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: chiaki-ng.AppImage_x86_64
-          path: chiaki-ng/appimage/chiaki-ng.AppImage_x86_64
+          name: chiaki-ng-vr.AppImage_x86_64
+          path: chiaki-ng/appimage/chiaki-ng-vr.AppImage_x86_64
           if-no-files-found: error
           retention-days: 7
 
@@ -277,12 +277,12 @@ jobs:
             --cap-add SYS_ADMIN \
             -t docker.io/streetpea/chiaki-ng-builder:qt6.9.3 \
             /bin/bash -c "sudo -E scripts/build-appimage.sh /build/appdir"
-          cp appimage/chiaki-ng.AppImage appimage/chiaki-ng.AppImage_arm64
+          cp appimage/chiaki-ng-vr.AppImage appimage/chiaki-ng-vr.AppImage_arm64
 
       - name: Upload chiaki-ng Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: chiaki-ng.AppImage_arm64
-          path: chiaki-ng/appimage/chiaki-ng.AppImage_arm64
+          name: chiaki-ng-vr.AppImage_arm64
+          path: chiaki-ng/appimage/chiaki-ng-vr.AppImage_arm64
           if-no-files-found: error
           retention-days: 7
